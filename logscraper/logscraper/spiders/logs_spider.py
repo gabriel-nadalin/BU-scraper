@@ -41,8 +41,18 @@ class LogsSpider(scrapy.Spider):
                         yield scrapy.Request(url=url, callback=self.parse_secoes_aux)
 
     def parse_secoes_aux(self, response):
+        urlSecao = response.url.rsplit('/', 1)[0] + '/'
+        for hash in response.json()['hashes']:
+            cdHash = hash['hash']
+
+            for arquivo in hash['nmarq']:
+                if arquivo.endswith('.bu'):
+                    url = urlSecao + f"{cdHash}/{arquivo}"
+                    yield scrapy.Request(url=url, callback=self.parse_bu)
+
+    def parse_bu(self, response):
         filename = response.url.split("/")[-1]
-        Path(f"config_teste/{filename}").write_bytes(response.body)
+        Path(f"bu_teste/{filename}").write_bytes(response.body)
         self.log(f"Saved file {filename}")
 
 
