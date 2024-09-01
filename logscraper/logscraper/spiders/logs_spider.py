@@ -1,3 +1,5 @@
+import os
+
 from pathlib import Path
 
 import scrapy
@@ -44,15 +46,19 @@ class LogsSpider(scrapy.Spider):
         urlSecao = response.url.rsplit('/', 1)[0] + '/'
         for hash in response.json()['hashes']:
             cdHash = hash['hash']
+            st = hash['st']
 
             for arquivo in hash['nmarq']:
-                if arquivo.endswith('.bu'):
+                if arquivo.endswith('.bu') or arquivo.endswith('.busa'):
                     url = urlSecao + f"{cdHash}/{arquivo}"
-                    yield scrapy.Request(url=url, callback=self.parse_bu)
+                    yield scrapy.Request(url=url, callback=self.parse_bu, meta={'status': st})
 
     def parse_bu(self, response):
         filename = response.url.split("/")[-1]
-        Path(f"bu_teste/{filename}").write_bytes(response.body)
+        dir = response.url.split('/')[3:-2]
+        dir = "/".join(dir) + "/" + response.meta.get('status')
+        os.makedirs(dir, exist_ok=True)
+        Path(f"{dir}/{filename}").write_bytes(response.body)
         self.log(f"Saved file {filename}")
 
 
