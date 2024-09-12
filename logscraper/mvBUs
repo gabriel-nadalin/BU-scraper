@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Define the source directory and the destination directory
+SOURCE_DIR="./oficial/ele2022/arquivo-urna"
+DEST_DIR="./BUs"
+EXTENSION="txt"  # Change this to your desired extension
+
+# Create the destination directory if it doesn't exist
+mkdir -p "$DEST_DIR"
+
+for PLEITO_DIR in "$SOURCE_DIR"/*/; do
+    PLEITO=$(basename "$PLEITO_DIR")
+    mkdir -p "$DEST_DIR/$PLEITO"
+    find "$PLEITO_DIR" -type f -name "*.bu*" -exec cp {} "$DEST_DIR/$PLEITO" \;
+    echo "$PLEITO"
+done
