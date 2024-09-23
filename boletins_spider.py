@@ -4,8 +4,8 @@ from pathlib import Path
 
 import scrapy
 
-class LogsSpider(scrapy.Spider):
-    name = "logs"
+class BoletinsSpider(scrapy.Spider):
+    name = "boletins"
     start_urls = [
         "https://resultados.tse.jus.br/oficial/comum/config/ele-c.json",
     ]
@@ -60,5 +60,3 @@ class LogsSpider(scrapy.Spider):
         os.makedirs(dir, exist_ok=True)
         Path(f"{dir}/{filename}").write_bytes(response.body)
         self.log(f"Saved file {filename}")
-
-
