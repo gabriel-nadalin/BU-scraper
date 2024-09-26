@@ -4,13 +4,14 @@ from pathlib import Path
 
 import scrapy
 
-class BoletinsSpider(scrapy.Spider):
-    name = "boletins"
+class BUSpider(scrapy.Spider):
+    name = "buspider"
     start_urls = [
         "https://resultados.tse.jus.br/oficial/comum/config/ele-c.json",
     ]
     ufs = ["ac", "al", "am", "ap", "ba", "ce", "df", "es", "go", "ma", "mg", "ms", "mt", "pa", "pb", "pe", "pi", "pr", "rj", "rn", "ro", "rr", "rs", "sc", "se", "sp", "to", "zz"]
 
+    # processa o arquivo de configuracao de eleicoes e constroi a url para os arquivos de configuracao de secao
     def parse(self, response):
         ciclo = response.json()['c']
         self.urlBase = f"https://resultados.tse.jus.br/oficial/{ciclo}/arquivo-urna/"
@@ -23,6 +24,7 @@ class BoletinsSpider(scrapy.Spider):
                 url = self.urlBase + f"{cdPleito}/config/{uf}/{filename}"
                 yield scrapy.Request(url=url, callback=self.parse_secoes_config)
 
+    # processa os arquivos de configuracao de secao e controi a url para os arquivos auxiliares de secao
     def parse_secoes_config(self, response):
         cdPleito = response.json()['cdp']
 
@@ -42,6 +44,7 @@ class BoletinsSpider(scrapy.Spider):
                         url = self.urlBase + f"{cdPleito}/dados/{uf}/{cdMunicipio}/{cdZona}/{nSecao}/{filename}"
                         yield scrapy.Request(url=url, callback=self.parse_secoes_aux)
 
+    # processa os arquivos auxiliares de secao e constroi a url para os BUs
     def parse_secoes_aux(self, response):
         urlSecao = response.url.rsplit('/', 1)[0] + '/'
         for hash in response.json()['hashes']:
@@ -53,6 +56,7 @@ class BoletinsSpider(scrapy.Spider):
                     url = urlSecao + f"{cdHash}/{arquivo}"
                     yield scrapy.Request(url=url, callback=self.parse_bu, meta={'status': st})
 
+    # baixa os BUs
     def parse_bu(self, response):
         filename = response.url.split("/")[-1]
         dir = response.url.split('/')[3:-2]
