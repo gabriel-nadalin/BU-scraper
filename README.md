@@ -6,5 +6,5 @@ Para executá-lo é necessário instalar o Scrapy:\
 `pip install scrapy`\
 \
 Com o Scrapy instalado, basta executar o comando\
-`scrapy crawl boletins_spider.py`\
+`scrapy runspider boletins_spider.py`\
 e o script fará o download de todos os BUs.
