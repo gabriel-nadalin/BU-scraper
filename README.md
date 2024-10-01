@@ -6,5 +6,5 @@ Para executá-lo é necessário instalar o Scrapy:\
 `pip install scrapy`\
 \
 Com o Scrapy instalado, basta executar o comando\
-`scrapy runspider buspider.py`\
+`python baixar_BUs.py <diretorio_destino>`\
 e o script fará o download de todos os BUs.

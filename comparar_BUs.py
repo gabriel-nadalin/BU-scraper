@@ -32,7 +32,7 @@ def compara_diretorios(dir1, dir2):
             if not filecmp.cmp(caminho1, caminho2, shallow=False):
                 print(f"{arquivo}: diferenca encontrada!")
         else:
-            print(f"{arquivo}: não e um arquivo em ambos os diretorios.")
+            print(f"{arquivo}: nao e um arquivo em ambos os diretorios")
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
