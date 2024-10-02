@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  db:
+    image: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+
+  scraper:
+    build: .
+    depends_on:
+      - db
+    environment:
+      - MONGO_URI=mongodb://db:27017
+    volumes:
+      - .:/app
+    stdin_open: true
+    tty: true

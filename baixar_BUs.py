@@ -98,11 +98,8 @@ class BUSpider(scrapy.Spider):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) < 2:
-        print('Uso: python buspider.py <diretorio_destino>')
-        exit(1)
-
-    dir = sys.argv[1]
+    print("\nBem vindo ao BU Scraper!")
+    dir = input("Insira o diretorio de destino dos BUs: ")
     os.makedirs(dir, exist_ok=True)
     
     process = CrawlerProcess(settings={'diretorio': dir})
