@@ -36,7 +36,7 @@ def compara_diretorios(dir1, dir2):
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Uso: python comparar_BUs.py <dir1> <dir2>")
+        print("Uso: python3 comparar_BUs.py <diretorio_1> <diretorio_2>")
         sys.exit(1)
     
     dir1 = sys.argv[1]

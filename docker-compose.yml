@@ -7,7 +7,7 @@ services:
     ports:
       - "27017:27017"
 
-  scraper:
+  shell:
     build: .
     depends_on:
       - db

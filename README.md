@@ -5,9 +5,14 @@ Esse script realiza o download dos Boletins de Urna (BUs) gerados pela urnas ele
 ## Para rodar em um container
 é necessário instalar o docker-compose:\
 `apt install docker-compose`,\
-executar o comando\
-`docker-compose run scraper`\
-e seguir as instruções
+e executar o comando\
+`docker-compose run shell`\
+para subir o container e obter um terminal.\
+\
+A partir daí é possível rodar os scripts de scraping\
+`python3 baixar_BUs.py <diretorio_destino> [pleito=<id>]`\
+e de comparação de BUs\
+`python3 comparar_BUs.py <diretorio_1> <diretorio_2>`
 
 ## Para rodar em Python nativo
 é necessário instalar o Scrapy:\

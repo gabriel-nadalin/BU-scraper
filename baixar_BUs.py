@@ -20,9 +20,14 @@ class BUSpider(scrapy.Spider):
         pleitos = [pleito['cd'] for pleito in response.json()['pl']]
         escolha = ""
 
+        # checa se pleito foi passado como argumento
+        if len(sys.argv) > 2 and sys.argv[2].startswith("pleito="):
+            escolha = sys.argv[2].split("=")[1]
+
         while escolha != "sair":
-            print(f"\nPleitos disponiveis: {pleitos}")
-            escolha = input(f"Escolha um pleito (ou \'ajuda\'): ")
+            if escolha == "":
+                print(f"\nPleitos disponiveis: {pleitos}")
+                escolha = input(f"Escolha um pleito (ou \'ajuda\'): ")
 
             if escolha == "todos":
                 escolha = "sair"
@@ -33,6 +38,7 @@ class BUSpider(scrapy.Spider):
                         yield scrapy.Request(url=url, callback=self.parse_secoes_config)
 
             elif escolha == "ajuda":
+                escolha = ""
                 print("\ncomandos:")
                 print("\'ajuda\' - mostra menu de ajuda")
                 print("\'todos\' - baixa os BUs de todos os pleitos disponiveis")
@@ -46,7 +52,8 @@ class BUSpider(scrapy.Spider):
                     url = self.urlBase + f"{pleito}/config/{uf}/{filename}"
                     yield scrapy.Request(url=url, callback=self.parse_secoes_config)
 
-            else:
+            elif escolha != "sair":
+                escolha = ""
                 print("Pleito invalido!")
 
     # processa os arquivos de configuracao de secao e controi a url para os arquivos auxiliares de secao
@@ -74,16 +81,19 @@ class BUSpider(scrapy.Spider):
         urlSecao = response.url.rsplit('/', 1)[0] + '/'
         for hash in response.json()['hashes']:
             cdHash = hash['hash']
+            dr = hash['dr']
+            hr = hash['hr']
             st = hash['st']
 
             for arquivo in hash['arq']:
                 nmArquivo = arquivo['nm']
+                tpArquivo = arquivo['tp']
 
-                if nmArquivo.endswith('-bu.dat') or nmArquivo.endswith('-busa.dat'):
+                if tpArquivo == "bu" or tpArquivo == "busa":
                     url = urlSecao + f"{cdHash}/{nmArquivo}"
-                    # yield scrapy.Request(url=url, callback=self.parse_bu, meta={'status': st})
+                    yield scrapy.Request(url=url, callback=self.parse_bu, meta={'data': dr, 'horario': hr, 'status': st})
 
-                    # teste para o simulado, que nao produz os BUs
+                    # teste para o simulado, que nao gera os BUs
                     dir = self.settings.get('diretorio') + "/"
                     Path(f"{dir}/{nmArquivo}").write_bytes("teste".encode())
                     self.log(f"Arquivo salvo: {nmArquivo}")
@@ -98,8 +108,11 @@ class BUSpider(scrapy.Spider):
 
 if __name__ == "__main__":
 
-    print("\nBem vindo ao BU Scraper!")
-    dir = input("Insira o diretorio de destino dos BUs: ")
+    if len(sys.argv) < 2:
+        print('Uso: python3 baixar_BUs.py <diretorio_destino> [pleito=<id>]')
+        exit(1)
+        
+    dir = sys.argv[1]
     os.makedirs(dir, exist_ok=True)
     
     process = CrawlerProcess(settings={'diretorio': dir})
