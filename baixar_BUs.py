@@ -2,27 +2,42 @@ import os
 import sys
 
 from pathlib import Path
+from pymongo import MongoClient
+from datetime import datetime
 
 import scrapy
 from scrapy.crawler import CrawlerProcess
 
+import logging
+
+# remove mensagens de debug do pymongo
+logging.getLogger("pymongo").setLevel(logging.CRITICAL)
+
+
 class BUSpider(scrapy.Spider):
     name = "buspider"
     start_urls = [
-        "https://resultados-sim.tse.jus.br/simulado/comum/config/ele-c.json",
+        "https://resultados.tse.jus.br/oficial/comum/config/ele-c.json",
     ]
-    ufs = ["ac", "al", "am", "ap", "ba", "ce", "df", "es", "go", "ma", "mg", "ms", "mt", "pa", "pb", "pe", "pi", "pr", "rj", "rn", "ro", "rr", "rs", "sc", "se", "sp", "to", "zz"]
+    
+    def __init__(self, diretorio, pleito=None, *args, **kwargs):
+        super(BUSpider, self).__init__(*args, **kwargs)
+        self.diretorio = diretorio
+        self.pleito = pleito
+        self.ufs = ["ac", "al", "am", "ap", "ba", "ce", "df", "es", "go", "ma", "mg", "ms", "mt", "pa", "pb", "pe", "pi", "pr", "rj", "rn", "ro", "rr", "rs", "sc", "se", "sp", "to", "zz"]
+
+        mongo_host = os.getenv("MONGO_HOST", "mongodb://localhost:27017/")
+        client = MongoClient(mongo_host)
+        db = client["bu"]
+        self.colecao = db[self.diretorio]
 
     # processa o arquivo de configuracao de eleicoes e constroi a url para os arquivos de configuracao de secao
     def parse(self, response):
         ciclo = response.json()['c']
-        self.urlBase = f"https://resultados-sim.tse.jus.br/simulado/{ciclo}/arquivo-urna/"
+        self.urlBase = f"https://resultados.tse.jus.br/oficial/{ciclo}/arquivo-urna/"
         pleitos = [pleito['cd'] for pleito in response.json()['pl']]
-        escolha = ""
 
-        # checa se pleito foi passado como argumento
-        if len(sys.argv) > 2 and sys.argv[2].startswith("pleito="):
-            escolha = sys.argv[2].split("=")[1]
+        escolha = self.pleito or ""
 
         while escolha != "sair":
             if escolha == "":
@@ -81,9 +96,11 @@ class BUSpider(scrapy.Spider):
         urlSecao = response.url.rsplit('/', 1)[0] + '/'
         for hash in response.json()['hashes']:
             cdHash = hash['hash']
-            dr = hash['dr']
-            hr = hash['hr']
-            st = hash['st']
+            data = hash['dr']
+            hora = hash['hr']
+            status = hash['st']
+            timestamp_string = f"{data} {hora}"
+            timestamp = datetime.strptime(timestamp_string, "%d/%m/%Y %H:%M:%S")
 
             for arquivo in hash['arq']:
                 nmArquivo = arquivo['nm']
@@ -91,17 +108,23 @@ class BUSpider(scrapy.Spider):
 
                 if tpArquivo == "bu" or tpArquivo == "busa":
                     url = urlSecao + f"{cdHash}/{nmArquivo}"
-                    yield scrapy.Request(url=url, callback=self.parse_bu, meta={'data': dr, 'horario': hr, 'status': st})
+                    yield scrapy.Request(url=url, callback=self.parse_bu, meta={'timestamp': timestamp, 'status': status})
 
                     # teste para o simulado, que nao gera os BUs
-                    dir = self.settings.get('diretorio') + "/"
-                    Path(f"{dir}/{nmArquivo}").write_bytes("teste".encode())
-                    self.log(f"Arquivo salvo: {nmArquivo}")
+                    # dir = self.diretorio + "/"
+                    # Path(f"{dir}/{nmArquivo}").write_bytes("teste".encode())
+                    # self.log(f"Arquivo salvo: {nmArquivo}")
 
     # baixa os BUs
     def parse_bu(self, response):
         filename = response.url.split("/")[-1]
-        dir = self.settings.get('diretorio') + "/"
+        dir = self.diretorio + "/"
+
+        timestamp = response.meta.get("timestamp")
+        status = response.meta.get("status")
+        entrada_bu = {"arquivo": filename, "url": response.url, "timestamp": timestamp, "status": status}
+        self.colecao.insert_one(entrada_bu)
+
         Path(f"{dir}/{filename}").write_bytes(response.body)
         self.log(f"Arquivo salvo: {filename}")
 
@@ -111,10 +134,14 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print('Uso: python3 baixar_BUs.py <diretorio_destino> [pleito=<id>]')
         exit(1)
-        
+
     dir = sys.argv[1]
     os.makedirs(dir, exist_ok=True)
+
+    pleito = None
+    if len(sys.argv) > 2 and sys.argv[2].startswith("pleito="):
+        pleito = sys.argv[2].split("=")[1]
     
-    process = CrawlerProcess(settings={'diretorio': dir})
-    process.crawl(BUSpider)
+    process = CrawlerProcess()
+    process.crawl(BUSpider, diretorio=dir, pleito=pleito)
     process.start()
