@@ -90,7 +90,7 @@ class BUSpider(scrapy.Spider):
 
                         filename = f"p{cdPleito.zfill(6)}-{uf}-m{cdMunicipio}-z{cdZona}-s{nSecao}-aux.json"
                         url = self.urlBase + f"{cdPleito}/dados/{uf}/{cdMunicipio}/{cdZona}/{nSecao}/{filename}"
-                        yield scrapy.Request(url=url, callback=self.parse_secoes_aux)
+                        yield scrapy.Request(url=url, callback=self.parse_secoes_aux, meta={'uf': uf})
 
     # processa os arquivos auxiliares de secao e constroi a url para os BUs
     def parse_secoes_aux(self, response):
@@ -109,7 +109,8 @@ class BUSpider(scrapy.Spider):
 
                 if tpArquivo == "bu" or tpArquivo == "busa":
                     url = urlSecao + f"{cdHash}/{nmArquivo}"
-                    yield scrapy.Request(url=url, callback=self.parse_bu, meta={'timestamp': timestamp, 'status': status})
+                    uf = response.meta.get("uf")
+                    yield scrapy.Request(url=url, callback=self.parse_bu, meta={'uf': uf, 'timestamp': timestamp, 'status': status})
 
                     # teste para o simulado, que nao gera os BUs
                     # dir = self.diretorio + "/"
@@ -119,7 +120,8 @@ class BUSpider(scrapy.Spider):
     # baixa os BUs
     def parse_bu(self, response):
         filename = response.url.split("/")[-1]
-        dir = self.diretorio + "/"
+        dir = self.diretorio + "/" + response.meta.get("uf") + "/"
+        os.makedirs(dir, exist_ok=True)
 
         timestamp = response.meta.get("timestamp")
         status = response.meta.get("status")
