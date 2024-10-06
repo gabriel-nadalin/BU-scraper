@@ -1,5 +1,6 @@
 import os
 import sys
+import random
 
 from pathlib import Path
 from pymongo import MongoClient
@@ -142,6 +143,9 @@ if __name__ == "__main__":
     if len(sys.argv) > 2 and sys.argv[2].startswith("pleito="):
         pleito = sys.argv[2].split("=")[1]
     
-    process = CrawlerProcess()
+    process = CrawlerProcess(settings={
+        'CONCURRENT_REQUESTS': 100,
+        'DOWNLOAD_DELAY': 0.01
+    })
     process.crawl(BUSpider, diretorio=dir, pleito=pleito)
     process.start()
