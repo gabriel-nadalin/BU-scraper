@@ -147,7 +147,7 @@ if __name__ == "__main__":
     
     process = CrawlerProcess(settings={
         'CONCURRENT_REQUESTS': 100,
-        'DOWNLOAD_DELAY': 0.012
+        'DOWNLOAD_DELAY': 0.02
     })
     process.crawl(BUSpider, diretorio=dir, pleito=pleito)
     process.start()
