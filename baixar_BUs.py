@@ -146,6 +146,7 @@ if __name__ == "__main__":
         pleito = sys.argv[2].split("=")[1]
     
     process = CrawlerProcess(settings={
+        'AUTOTHROTTLE_ENABLED': True,
         'CONCURRENT_REQUESTS': 100,
         'DOWNLOAD_DELAY': 0.02
     })
