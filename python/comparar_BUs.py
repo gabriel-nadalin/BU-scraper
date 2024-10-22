@@ -31,9 +31,11 @@ def compara_diretorios(dir1, dir2):
         if os.path.isfile(caminho1) and os.path.isfile(caminho2):
             if not filecmp.cmp(caminho1, caminho2, shallow=False):
                 print(f"{arquivo}: diferenca encontrada!")
+        elif os.path.isdir(caminho1) and os.path.isdir(caminho2):
+            compara_diretorios(caminho1, caminho2)
         else:
-            print(f"{arquivo}: nao e um arquivo em ambos os diretorios")
-
+            print(f"{arquivo}: tipos incompativeis entre arquivos")
+            
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Uso: python3 comparar_BUs.py <diretorio_1> <diretorio_2>")

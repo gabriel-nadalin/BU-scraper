@@ -1,20 +1,19 @@
-version: '3.8'
-
 services:
   db:
     image: mongo
     restart: always
     ports:
-      - "27018:27017"
+      - "27017:27017"
     volumes:
       - db:/data/db 
 
   shell:
     build: .
+    network_mode: host
     depends_on:
       - db
-    environment:
-      - MONGO_HOST=mongodb://db:27017
+    # environment:
+    #   - MONGO_HOST=mongodb://db:27017
     volumes:
       - .:/app
     stdin_open: true
